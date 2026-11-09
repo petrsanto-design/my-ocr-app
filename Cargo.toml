@@ -1,0 +1,38 @@
+[package]
+name = "ocr_app"
+version = "0.1.0"
+edition = "2021"
+description = "Автономное GUI-приложение для OCR (PaddleOCR PP-OCRv5 eslav через MNN)"
+build = "build.rs"
+
+[dependencies]
+# GUI. Версии eframe и egui должны совпадать (обе 0.37).
+eframe = "0.37"
+egui = "0.37"
+
+# OCR-движок (PaddleOCR через MNN). Загрузка моделей из памяти: OcrEngine::from_bytes.
+ocr-rs = "2.4"
+# План Б, если предсобранный MNN не линкуется статически под MSVC (нужны CMake + MSVC):
+# ocr-rs = { version = "2.4", features = ["build-mnn-from-source"] }
+# НЕ включайте feature "mnn-dynamic": она требует внешнюю MNN.dll и ломает один .exe.
+
+# Декодирование изображений. Версия 0.25 совпадает с версией внутри ocr-rs,
+# поэтому DynamicImage — один и тот же тип.
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "tiff", "bmp"] }
+
+# Нативные диалоги открытия/сохранения файла.
+rfd = "0.17"
+# Каналы между GUI и фоновым потоком OCR.
+crossbeam-channel = "0.5"
+# Буфер обмена.
+arboard = "3"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+strip = true
+# panic = "unwind" (по умолчанию) нужен: воркер ловит паники через catch_unwind.
+
+[profile.dev.package."*"]
+# В debug-сборке инференс и декодирование были бы мучительно медленными.
+opt-level = 3
